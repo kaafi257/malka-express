@@ -16,7 +16,6 @@ export function NewRequestForm({ userId, onCreated }: { userId: string; onCreate
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Business rules: T1 min 5 copies (200 ETB), Waybill min 1 copy (30 ETB each)
   const minQty = type === 't1' ? 5 : 1;
   const price = type === 't1' ? Math.max(5, quantity) * 40 : Math.max(1, quantity) * 30;
 
@@ -53,7 +52,7 @@ export function NewRequestForm({ userId, onCreated }: { userId: string; onCreate
         { 
           type, 
           description: description.trim(), 
-          quantity: Math.max(minQty, quantity),
+          quantity: Math.max(minQty, quantity), 
           files 
         }, 
         userId
@@ -87,7 +86,7 @@ export function NewRequestForm({ userId, onCreated }: { userId: string; onCreate
         </label>
 
         <label>
-          Copies / Quantity {type === 't1' ? '(Min 5)' : '(Min 1)'}
+          Copies / Quantity {type === 't1' ? '(Min 5 copies)' : '(Min 1 copy)'}
           <input
             type="number"
             min={minQty}
@@ -134,21 +133,21 @@ export function NewRequestForm({ userId, onCreated }: { userId: string; onCreate
           </ul>
         )}
 
-        {/* Live Price Display for the Driver */}
-        <div className="price-box full" style={{
+        {/* Live calculated price banner */}
+        <div className="full" style={{
           background: 'var(--brand-soft)',
-          padding: '14px',
+          padding: '14px 18px',
           borderRadius: '12px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
           <div>
-            <span style={{ fontSize: '0.9rem', color: 'var(--muted)', display: 'block' }}>Total Price</span>
+            <span style={{ fontSize: '0.85rem', color: 'var(--muted)', display: 'block' }}>Total Price</span>
             <strong style={{ fontSize: '1.4rem', color: 'var(--brand)' }}>{formatEtb(price)}</strong>
           </div>
           <small className="muted">
-            {type === 't1' ? '200 ETB for 5 copies' : `${quantity} × 30 ETB`}
+            {type === 't1' ? '200 ETB for 5 copies (40 ETB/extra)' : `${quantity} × 30 ETB`}
           </small>
         </div>
 
