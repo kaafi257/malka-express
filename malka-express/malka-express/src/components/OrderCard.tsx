@@ -1,13 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Phone, Printer } from 'lucide-react';
+import { useState } from 'react';
+import { Phone } from 'lucide-react';
 import * as api from '../lib/api';
 import { formatDateTime, formatEtb, formatPhone } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/toast';
-import type { Order, PaymentRow, StaffRole } from '../lib/types';
+import type { Order, StaffRole } from '../lib/types';
 import { DocumentList } from './DocumentList';
-import { OrderTimeline } from './OrderTimeline';
-import { Receipt } from './Receipt';
 import { ProgressTracker } from './ProgressTracker';
 import { StatusBadge } from './StatusBadge';
 
@@ -21,30 +19,6 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
   const { t, tError, locale } = useI18n();
   const { notify } = useToast();
   const [busy, setBusy] = useState(false);
-  const [receipt, setReceipt] = useState<PaymentRow | null>(null);
-
-  useEffect(() => {
-    if (!receipt) return;
-    const done = () => setReceipt(null);
-    window.addEventListener('afterprint', done, { once: true });
-    const id = window.setTimeout(() => window.print(), 50);
-    return () => {
-      window.clearTimeout(id);
-      window.removeEventListener('afterprint', done);
-    };
-  }, [receipt]);
-
-  async function printReceipt() {
-    setBusy(true);
-    try {
-      const p = await api.fetchPaymentForOrder(order.id);
-      if (p) setReceipt(p);
-    } catch (e) {
-      notify('error', tError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
 
   const isDriver = viewer === 'driver';
   const isManager = viewer === 'owner' || viewer === 'manager';
@@ -137,17 +111,9 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
             disabled={busy}
             onClick={() => void run(async () => {
               await api.collectOrder(order.id, order.pin?.pin || '000000');
-            }, 'Order completed and handed over!')}
+            }, 'Copies handed over to driver!')}
           >
             ✓ Complete & Hand Over
-          </button>
-        </div>
-      )}
-
-      {isStaff && order.payment_status === 'paid' && order.status !== 'cancelled' && (
-        <div className="actions">
-          <button className="link" disabled={busy} onClick={() => void printReceipt()}>
-            <Printer size={13} aria-hidden /> {t('receipt.print')}
           </button>
         </div>
       )}
@@ -159,9 +125,6 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
           </button>
         </div>
       )}
-
-      {isStaff && <OrderTimeline orderId={order.id} />}
-      {receipt && <Receipt order={order} payment={receipt} />}
     </article>
   );
 }
