@@ -56,66 +56,29 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
-/** Resolves the signed-in user's profile with resilient fallbacks */
 export async function loadProfile(
   userId: string,
 ): Promise<{ profile: Profile } | { problem: 'inactive' | 'no_profile' }> {
-  try {
-    const { data: staff, error: staffError } = await supabase
-      .from('staff_profiles')
-      .select('id, full_name, phone, role, active')
-      .eq('id', userId)
-      .maybeSingle();
+  const { data: staff, error: staffError } = await supabase
+    .from('staff_profiles')
+    .select('id, full_name, phone, role, active')
+    .eq('id', userId)
+    .maybeSingle();
+  if (staffError) throw toAppError(staffError);
 
-    if (staffError) {
-      console.warn('[malka-express] staff_profiles check:', staffError.message);
-    } else if (staff) {
-      if (!staff.active) return { problem: 'inactive' };
-      return { profile: { kind: 'staff', id: staff.id, full_name: staff.full_name, phone: staff.phone, role: staff.role } };
-    }
-  } catch (err) {
-    console.warn('[malka-express] staff check warning:', err);
+  if (staff) {
+    if (!staff.active) return { problem: 'inactive' };
+    return { profile: { kind: 'staff', id: staff.id, full_name: staff.full_name, phone: staff.phone, role: staff.role as StaffRole } };
   }
 
-  try {
-    const { data: driver, error: driverError } = await supabase
-      .from('driver_profiles')
-      .select('id, full_name, phone')
-      .eq('id', userId)
-      .maybeSingle();
+  const { data: driver, error: driverError } = await supabase
+    .from('driver_profiles')
+    .select('id, full_name, phone')
+    .eq('id', userId)
+    .maybeSingle();
+  if (driverError) throw toAppError(driverError);
 
-    if (driverError) {
-      console.warn('[malka-express] driver_profiles check:', driverError.message);
-    } else if (driver) {
-      return { profile: { kind: 'driver', id: driver.id, full_name: driver.full_name, phone: driver.phone } };
-    }
-  } catch (err) {
-    console.warn('[malka-express] driver check warning:', err);
-  }
-
-  // Self-heal: If user metadata has driver info but trigger didn't run, create profile now
-  try {
-    const { data: authData } = await supabase.auth.getUser();
-    const meta = authData?.user?.user_metadata;
-    if (meta?.full_name && meta?.phone) {
-      const { data: created, error: insertError } = await supabase
-        .from('driver_profiles')
-        .upsert({
-          id: userId,
-          full_name: String(meta.full_name),
-          phone: String(meta.phone),
-        })
-        .select('id, full_name, phone')
-        .maybeSingle();
-
-      if (!insertError && created) {
-        return { profile: { kind: 'driver', id: created.id, full_name: created.full_name, phone: created.phone } };
-      }
-    }
-  } catch {
-    /* ignore fallback */
-  }
-
+  if (driver) return { profile: { kind: 'driver', id: driver.id, full_name: driver.full_name, phone: driver.phone } };
   return { problem: 'no_profile' };
 }
 
@@ -142,7 +105,7 @@ function safeFileName(name: string): string {
 }
 
 export async function submitRequest(
-  input: { type: DocumentType; description: string; files: File[] },
+  input: { type: DocumentType; description: string; quantity: number; files: File[] },
   userId: string,
 ): Promise<void> {
   const invalid = validateFiles(input.files);
@@ -151,6 +114,7 @@ export async function submitRequest(
   const { data: orderId, error } = await supabase.rpc('create_order', {
     p_document_type: input.type,
     p_description: input.description,
+    p_quantity: input.quantity,
   });
   if (error) throw toAppError(error);
 
@@ -195,14 +159,19 @@ async function rpc(name: string, args: Record<string, unknown>): Promise<unknown
 }
 
 export const setPrice = (orderId: string, price: number) => rpc('set_price', { p_order_id: orderId, p_price: price });
+
 export const recordPayment = (orderId: string, method: PaymentMethod, reference: string) =>
   rpc('record_payment', { p_order_id: orderId, p_method: method, p_reference: reference });
+
 export const startPrinting = (orderId: string) => rpc('advance_order', { p_order_id: orderId, p_to: 'printing' });
+
 export const markReady = (orderId: string) => rpc('advance_order', { p_order_id: orderId, p_to: 'ready' });
+
 export const cancelOrder = (orderId: string) => rpc('cancel_order', { p_order_id: orderId });
+
 export const regeneratePin = (orderId: string) => rpc('regenerate_pin', { p_order_id: orderId });
 
-export async function collectOrder(orderId: string, pin: string): Promise<CollectResult> {
+export async function collectOrder(orderId: string, pin: string = ''): Promise<CollectResult> {
   return (await rpc('collect_order', { p_order_id: orderId, p_pin: pin })) as CollectResult;
 }
 
@@ -241,7 +210,7 @@ export async function fetchOrderEvents(orderId: string): Promise<OrderEvent[]> {
 export async function fetchStaff(): Promise<StaffMember[]> {
   const { data, error } = await supabase
     .from('staff_profiles')
-    .select('id, full_name, phone, role, active')
+    .select('id, full_name, phone, role, active, created_at')
     .order('created_at', { ascending: true });
   if (error) throw toAppError(error);
   return (data ?? []) as StaffMember[];
