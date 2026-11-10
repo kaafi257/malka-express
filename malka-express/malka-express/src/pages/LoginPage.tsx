@@ -40,7 +40,7 @@ export function LoginPage() {
           await signInDriver(normalized);
         }
       }
-    } catch (err) {
+     } catch (err) {
       const detail = err instanceof Error && 'detail' in err ? (err as AppError).detail : undefined;
       setError(detail ? `${tError(err)} (${detail})` : tError(err));
     } finally {
