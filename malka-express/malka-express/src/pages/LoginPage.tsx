@@ -33,16 +33,16 @@ export function LoginPage() {
       } else {
         const normalized = normalizePhone(phone);
         if (!normalized) throw new AppError('phone_invalid');
-        if (password.length < 6) throw new AppError('weak_password');
         if (driverMode === 'register') {
           if (fullName.trim().length < 2) throw new AppError('name_required');
-          await registerDriver(fullName, normalized, password);
+          await registerDriver(fullName, normalized);
         } else {
-          await signInDriver(normalized, password);
+          await signInDriver(normalized);
         }
       }
     } catch (err) {
-      setError(tError(err));
+      const detail = err instanceof Error && 'detail' in err ? (err as AppError).detail : undefined;
+      setError(detail ? `${tError(err)} (${detail})` : tError(err));
     } finally {
       setBusy(false);
     }
@@ -106,18 +106,6 @@ export function LoginPage() {
                 {t('login.phone')}
                 <input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('login.phoneHint')} required />
               </label>
-              <label>
-                {t('login.driverPassword')}
-                <input
-                  type="password"
-                  minLength={6}
-                  autoComplete={driverMode === 'register' ? 'new-password' : 'current-password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </label>
-              {driverMode === 'register' && <p className="hint">{t('login.driverPasswordHint')}</p>}
             </>
           )}
 
