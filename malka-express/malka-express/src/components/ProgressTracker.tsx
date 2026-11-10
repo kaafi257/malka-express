@@ -1,21 +1,22 @@
 import { Check } from 'lucide-react';
-import { useI18n } from '../lib/i18n';
-import { PROGRESS_STEPS, progressIndex } from '../lib/format';
 import type { OrderStatus } from '../lib/types';
 
-/** Simple step bar for drivers: review → payment → paid → printing → ready → collected. */
 export function ProgressTracker({ status }: { status: OrderStatus }) {
-  const { t } = useI18n();
   if (status === 'cancelled') return null;
-  const current = progressIndex(status);
+
+  const isReady = status === 'ready' || status === 'collected';
+  const isDone = status === 'collected';
+
   return (
-    <ol className="tracker" aria-label="progress">
-      {PROGRESS_STEPS.map((step, index) => (
-        <li key={step} className={index < current ? 'done' : index === current ? 'current' : ''}>
-          <span className="dot">{index < current ? <Check size={12} /> : index + 1}</span>
-          <small>{t(`status.${step}`)}</small>
-        </li>
-      ))}
+    <ol className="tracker" aria-label="progress" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+      <li className={isReady ? 'done' : 'current'}>
+        <span className="dot">{isReady ? <Check size={12} /> : 1}</span>
+        <small>1. In Progress</small>
+      </li>
+      <li className={isDone ? 'done' : isReady ? 'current' : ''}>
+        <span className="dot">{isDone ? <Check size={12} /> : 2}</span>
+        <small>2. Ready for Pickup</small>
+      </li>
     </ol>
   );
 }
