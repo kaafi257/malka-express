@@ -51,8 +51,35 @@ export interface Order {
   collected_at: string | null;
   driver: { full_name: string; phone: string } | null;
   documents: OrderDocument[];
-  /** Only returned to the driver who owns the order. Staff never receive it. */
   pin: { pin: string } | null;
 }
 
 export type CollectResult = 'collected' | 'wrong_pin' | 'locked';
+
+export interface PaymentRow {
+  id: string;
+  order_id: string;
+  amount: number;
+  method: PaymentMethod;
+  reference: string | null;
+  created_at: string;
+  order: { reference: string; document_type: DocumentType } | null;
+}
+
+export interface StaffMember {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  role: StaffRole;
+  active: boolean;
+  created_at: string;
+}
+
+export interface OrderEvent {
+  id: number;
+  event: string;
+  from_status: OrderStatus | null;
+  to_status: OrderStatus | null;
+  note: string | null;
+  created_at: string;
+}
