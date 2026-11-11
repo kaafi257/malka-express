@@ -1,4 +1,4 @@
-import { RefreshCw, Search } from 'lucide-react';
+import { BarChart3, ClipboardList, CreditCard, Menu, RefreshCw, Search, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PaymentsAdminPage } from './PaymentsAdminPage';
 import { ReportsPage } from './ReportsPage';
@@ -21,6 +21,7 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<Tab>('orders');
+  const [menuOpen, setMenuOpen] = useState(false);
   const pendingPayments = orders.filter((o) => o.submissions.some((s) => s.status === 'pending_verification')).length;
   const isManager = profile.role === 'owner' || profile.role === 'manager';
   const tabs: Tab[] = ['orders', ...(isManager ? (['payments', 'reports'] as const) : []), ...(profile.role === 'owner' ? (['team'] as const) : [])];
@@ -33,6 +34,19 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
       document.title = t('app.name');
     };
   }, [orders, t]);
+
+  // Close the menu with Escape and lock page scroll while it is open.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenuOpen(false);
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (error) notify('error', tError(error));
@@ -66,16 +80,49 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
     </div>
   );
 
+  const ICONS = { orders: ClipboardList, payments: CreditCard, reports: BarChart3, team: Users } as const;
   const nav =
     tabs.length > 1 ? (
-      <div className="tabs" role="tablist">
-        {tabs.map((x) => (
-          <button key={x} role="tab" aria-selected={tab === x} className={tab === x ? 'selected' : ''} onClick={() => setTab(x)}>
-            {t(`nav.${x}`)}
-            {x === 'payments' && pendingPayments > 0 ? ` (${pendingPayments})` : ''}
+      <>
+        <div className="navbar">
+          <button className="menu-btn" onClick={() => setMenuOpen(true)} aria-label="Menu" aria-expanded={menuOpen}>
+            <Menu size={22} aria-hidden />
           </button>
-        ))}
-      </div>
+          <b className="menu-title">{t(`nav.${tab}`)}</b>
+          {pendingPayments > 0 && tab !== 'payments' && <span className="drawer-badge">{pendingPayments}</span>}
+        </div>
+        <div className={menuOpen ? 'drawer-scrim open' : 'drawer-scrim'} onClick={() => setMenuOpen(false)} />
+        <aside className={menuOpen ? 'drawer open' : 'drawer'} role="dialog" aria-modal="true" aria-label="Menu" inert={!menuOpen}>
+          <div className="drawer-head">
+            <button className="icon-btn drawer-close" onClick={() => setMenuOpen(false)} aria-label={t('common.close')}>
+              <X size={22} aria-hidden />
+            </button>
+            <span className="mark mini">M</span>
+            <b>{profile.full_name}</b>
+            <span className="role">{profile.role}</span>
+          </div>
+          <nav>
+            {tabs.map((x, n) => {
+              const Icon = ICONS[x];
+              return (
+                <button
+                  key={x}
+                  className={tab === x ? 'drawer-item on' : 'drawer-item'}
+                  style={{ ['--i' as string]: n }}
+                  onClick={() => {
+                    setTab(x);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <span className="ico"><Icon size={20} aria-hidden /></span>
+                  {t(`nav.${x}`)}
+                  {x === 'payments' && pendingPayments > 0 && <span className="drawer-badge">{pendingPayments}</span>}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+      </>
     ) : null;
 
   if (tab === 'payments' && isManager)
