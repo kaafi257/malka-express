@@ -9,7 +9,7 @@ import type { DriverPayMethod, Order, PaymentMethodConfig } from '../../lib/type
 
 const ICONS = { ebirr: Wallet, cbe_bank: Landmark, telebirr: Smartphone, awash_bank: Building2, cbe_birr: CreditCard } as const;
 
-/** Full-screen payment sheet: choose method → see instructions → reference + receipt → submit for verification. */
+/** Full-screen payment sheet: choose method → see instructions → receipt → submit for verification. */
 export function PaymentFlow({ order, onClose, onDone }: { order: Order; onClose: () => void; onDone: () => Promise<void> | void }) {
   const { t, tError } = useI18n();
   const { notify } = useToast();
@@ -17,7 +17,6 @@ export function PaymentFlow({ order, onClose, onDone }: { order: Order; onClose:
   const [loading, setLoading] = useState(true);
   const [method, setMethod] = useState<DriverPayMethod | null>(null);
   const [step, setStep] = useState<'method' | 'details'>('method');
-  const [reference, setReference] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -63,6 +62,9 @@ export function PaymentFlow({ order, onClose, onDone }: { order: Order; onClose:
     if (!method || !file) return;
     setBusy(true);
     try {
+      // No reference number is asked from the driver: the receipt is the proof.
+      // A unique code is generated so each submission stays distinct for the manager.
+      const reference = `RCPT-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       await submitPayment({ orderId: order.id, method, reference, file });
       notify('success', t('pay.submitted'));
       await onDone();
@@ -160,11 +162,6 @@ export function PaymentFlow({ order, onClose, onDone }: { order: Order; onClose:
               )}
             </div>
 
-            <label>
-              {t('pay.transactionRef')}
-              <input value={reference} onChange={(e) => setReference(e.target.value)} maxLength={80} autoComplete="off" required minLength={3} />
-            </label>
-
             <label className="upload">
               <UploadCloud />
               <b>{file ? file.name : t('pay.chooseReceipt')}</b>
@@ -172,7 +169,7 @@ export function PaymentFlow({ order, onClose, onDone }: { order: Order; onClose:
               <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => pickFile(e.target.files)} />
             </label>
 
-            <button className="primary big" disabled={busy || !ready || !file || reference.trim().length < 3}>
+            <button className="primary big" disabled={busy || !ready || !file}>
               {busy ? t('pay.submitting') : t('pay.submit')}
             </button>
           </form>
