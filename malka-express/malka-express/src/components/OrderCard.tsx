@@ -1,5 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { KeyRound, Phone, ShieldCheck, CheckCircle2, RotateCw } from 'lucide-react';
+import {
+  KeyRound,
+  Phone,
+  ShieldCheck,
+  CheckCircle2,
+  RotateCw,
+  Printer,
+} from 'lucide-react';
 import * as api from '../lib/api';
 import { formatDateTime, formatEtb, formatPhone } from '../lib/format';
 import { useI18n } from '../lib/i18n';
@@ -26,6 +33,8 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
   const isStaff = !isDriver;
 
   async function run(action: () => Promise<unknown>, successText = t('toast.updated')) {
+    if (busy) return;
+
     setBusy(true);
     try {
       await action();
@@ -33,6 +42,13 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
       await onChanged();
     } catch (e) {
       notify('error', tError(e));
+      // Refresh even after a failed transition: another staff member may
+      // have changed the order since this card was loaded.
+      try {
+        await onChanged();
+      } catch {
+        // Preserve the original action error; the next normal refresh can retry.
+      }
     } finally {
       setBusy(false);
     }
@@ -41,10 +57,12 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
   // Verify driver's secret PIN
   async function handleVerifyPin(e: FormEvent) {
     e.preventDefault();
-    if (pinInput.trim().length < 6) {
+    if (pinInput.trim().length !== 6) {
       notify('error', 'Please enter the 6-digit Secret Code.');
       return;
     }
+    if (busy) return;
+
     setBusy(true);
     try {
       const result = await api.collectOrder(order.id, pinInput.trim());
@@ -65,7 +83,9 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
   }
 
   function cancel() {
-    if (window.confirm(t('action.cancelConfirm'))) void run(() => api.cancelOrder(order.id));
+    if (window.confirm(t('action.cancelConfirm'))) {
+      void run(() => api.cancelOrder(order.id));
+    }
   }
 
   const canCancel = isDriver
@@ -125,13 +145,37 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
         <p className="hint">We received your request. Copies are being printed at the desk.</p>
       )}
 
-      {/* Staff: mark ready */}
-      {isStaff && order.status !== 'ready' && order.status !== 'collected' && order.status !== 'cancelled' && (
+      {/* Staff: only show the action valid for the current order status. */}
+      {isStaff && order.status === 'paid' && (
         <div className="actions">
           <button
+            type="button"
             className="primary modern-btn"
             disabled={busy}
-            onClick={() => void run(() => api.markReady(order.id), 'Copies printed · Secret Code generated for driver!')}
+            onClick={() =>
+              void run(
+                () => api.startPrinting(order.id),
+                'Printing started successfully!',
+              )
+            }
+          >
+            <Printer size={18} /> Start Printing
+          </button>
+        </div>
+      )}
+
+      {isStaff && order.status === 'printing' && (
+        <div className="actions">
+          <button
+            type="button"
+            className="primary modern-btn"
+            disabled={busy}
+            onClick={() =>
+              void run(
+                () => api.markReady(order.id),
+                'Copies printed · Secret Code generated for driver!',
+              )
+            }
           >
             <CheckCircle2 size={18} /> Mark ready for pickup
           </button>
@@ -157,7 +201,7 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
               autoComplete="off"
               required
             />
-            <button className="primary modern-btn" disabled={busy || pinInput.length < 6}>
+            <button type="submit" className="primary modern-btn" disabled={busy || pinInput.length !== 6}>
               Verify &amp; hand over
             </button>
             {isManager && (
@@ -187,7 +231,7 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
           )}
           {canCancel && (
             <div className="actions">
-              <button className="danger-link" disabled={busy} onClick={cancel}>
+              <button type="button" className="danger-link" disabled={busy} onClick={cancel}>
                 {t('action.cancelOrder')}
               </button>
             </div>
