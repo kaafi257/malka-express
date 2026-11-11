@@ -30,7 +30,7 @@ button:disabled { cursor: not-allowed; opacity: 0.6; }
 .center { min-height: 100vh; display: grid; place-items: center; padding: 20px; text-align: center; }
 .center-text { text-align: center; padding: 24px 0; }
 .shell { min-height: 100vh; display: flex; flex-direction: column; }
-.main { width: 100%; max-width: 980px; margin: 0 auto; padding: 20px 16px 40px; display: grid; gap: 18px; flex: 1; }
+.main { width: 100%; max-width: 980px; margin: 0 auto; padding: 20px 16px 40px; display: grid; gap: 18px; flex: 1; align-content: start; }
 footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 18px; }
 
 .topbar {
@@ -163,7 +163,7 @@ input:focus, select:focus { border-color: var(--brand); }
 .pin-box small { display: block; }
 .pin { display: block; font-size: 2rem; letter-spacing: 0.3em; color: var(--brand); }
 
-.tracker { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
+.tracker { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; }
 .tracker li { display: grid; justify-items: center; gap: 4px; text-align: center; position: relative; color: var(--muted); }
 .tracker li:not(:last-child)::after { content: ''; position: absolute; top: 11px; left: 55%; width: 90%; height: 2px; background: var(--line); }
 .tracker li.done:not(:last-child)::after { background: var(--ok); }
@@ -172,7 +172,7 @@ input:focus, select:focus { border-color: var(--brand); }
 .tracker .current .dot { background: var(--brand); }
 .tracker .current { color: var(--brand); font-weight: 700; }
 .tracker small { font-size: 0.62rem; line-height: 1.15; }
-@media (max-width: 480px) { .tracker small { display: none; } .tracker .current small { display: block; position: absolute; top: 28px; width: 90px; left: 50%; transform: translateX(-50%); } .tracker { margin-bottom: 22px; } }
+@media (max-width: 480px) { .tracker small { font-size: 0.66rem; } }
 
 /* ---------- Feedback ---------- */
 .notice { padding: 10px 12px; border-radius: 10px; font-size: 0.88rem; background: var(--brand-soft); }
@@ -306,3 +306,19 @@ input:focus, select:focus { border-color: var(--brand); }
 .method-form .check input { width: 20px; min-height: 20px; }
 textarea { width: 100%; min-height: 80px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; resize: vertical; }
 textarea:focus { border-color: var(--brand); }
+
+/* ---------- Mobile app polish ---------- */
+.order, .dcard { border-left-width: 1px; border-radius: 16px; }
+.order::before { content: ''; display: block; height: 4px; border-radius: 4px; background: var(--line); }
+.order.pending_review::before { background: var(--gold); }
+.order.awaiting_payment::before { background: #d98324; }
+.order.paid::before, .order.printing::before { background: #3b6fd4; }
+.order.ready::before, .order.collected::before { background: var(--ok); }
+.order.cancelled::before { background: var(--danger); }
+.price-entry input { font-size: 1.1rem; font-weight: 700; }
+@media (max-width: 640px) {
+  .main { padding-bottom: 96px; }
+  .main > .tabs:not(.sub) { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; border-radius: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 18px rgba(35,26,29,.08); }
+  .main > .tabs:not(.sub) button { min-height: 48px; font-size: .8rem; }
+  .main > .tabs:not(.sub) button.selected { background: var(--brand-soft); color: var(--brand); box-shadow: none; }
+}
