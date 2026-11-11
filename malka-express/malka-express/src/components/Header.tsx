@@ -1,6 +1,7 @@
 import { LogOut } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { useI18n } from '../lib/i18n';
+import { InstallButton } from './InstallButton';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function Header() {
@@ -16,6 +17,7 @@ export function Header() {
         </div>
       </div>
       <div className="user">
+        <InstallButton />
         <LanguageSwitcher />
         {profile && (
           <span className="user-name">
