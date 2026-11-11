@@ -33,6 +33,12 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
     });
   }, [orders, filter, query]);
 
+  const counts = useMemo(() => {
+    const result = {} as Record<StatusFilter, number>;
+    for (const f of FILTERS) result[f] = orders.filter((o) => matchesFilter(o.status, f)).length;
+    return result;
+  }, [orders]);
+
   const toolbar = (
     <div className="toolbar">
       <label className="searchbox">
@@ -42,7 +48,7 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
       <div className="chips" role="tablist">
         {FILTERS.map((f) => (
           <button key={f} role="tab" aria-selected={filter === f} className={filter === f ? 'chip on' : 'chip'} onClick={() => setFilter(f)}>
-            {t(`filter.${f}`)}
+            {t(`filter.${f}`)} <i>{counts[f]}</i>
           </button>
         ))}
       </div>
@@ -53,7 +59,6 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
     <>
       <div className="intro">
         <div>
-          <p className="eyebrow">{t('staff.eyebrow')}</p>
           <h1>{t('staff.title')}</h1>
           <p className="muted">{t('staff.subtitle')}</p>
         </div>

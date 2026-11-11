@@ -23,7 +23,6 @@ export function DriverDashboard() {
     <>
       <div className="intro">
         <div>
-          <p className="eyebrow">{t('driver.eyebrow')}</p>
           <h1>{t('driver.title')}</h1>
           <p className="muted">{t('driver.subtitle')}</p>
         </div>
