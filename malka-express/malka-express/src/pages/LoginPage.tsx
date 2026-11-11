@@ -41,7 +41,8 @@ export function LoginPage() {
         }
       }
     } catch (err) {
-      setError(tError(err));
+      const detail = err instanceof Error && 'detail' in err ? (err as AppError).detail : undefined;
+      setError(detail ? `${tError(err)} (${detail})` : tError(err));
     } finally {
       setBusy(false);
     }
@@ -50,19 +51,16 @@ export function LoginPage() {
   const problemText = problem === 'inactive' ? t('login.inactive') : problem === 'no_profile' ? t('login.noProfile') : '';
 
   return (
-    <main className="auth">
-      <div className="auth-band">
-        <div className="auth-band-inner">
-          <div className="login-top">
-            <div className="mark">M</div>
-            <LanguageSwitcher />
-          </div>
-          <p className="stencil">{t('app.port')}</p>
-          <h1>{t('app.name')}</h1>
-          <p className="muted">{t('app.tagline')}</p>
-        </div>
-      </div>
+    <main className="center">
       <section className="card login">
+        <div className="login-top">
+          <div className="mark">M</div>
+          <LanguageSwitcher />
+        </div>
+        <p className="eyebrow">{t('app.port')}</p>
+        <h1>{t('app.name')}</h1>
+        <p className="muted">{t('app.tagline')}</p>
+
         <div className="tabs" role="tablist">
           <button role="tab" aria-selected={tab === 'driver'} className={tab === 'driver' ? 'selected' : ''} onClick={() => setTab('driver')}>
             {t('login.driverTab')}

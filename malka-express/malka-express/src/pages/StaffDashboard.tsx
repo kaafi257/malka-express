@@ -1,5 +1,8 @@
 import { RefreshCw, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { PaymentsAdminPage } from './PaymentsAdminPage';
+import { ReportsPage } from './ReportsPage';
+import { TeamPage } from './TeamPage';
 import { OrderList } from '../components/OrderList';
 import { StatCards } from '../components/StatCards';
 import { useOrders } from '../hooks/useOrders';
@@ -8,6 +11,7 @@ import { useToast } from '../lib/toast';
 import { matchesFilter, type StatusFilter } from '../lib/format';
 import type { StaffProfile } from '../lib/types';
 
+type Tab = 'orders' | 'payments' | 'reports' | 'team';
 const FILTERS: StatusFilter[] = ['all', 'new', 'payment', 'work', 'ready', 'done'];
 
 export function StaffDashboard({ profile }: { profile: StaffProfile }) {
@@ -16,6 +20,19 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
   const { orders, loading, error, reload } = useOrders();
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [query, setQuery] = useState('');
+  const [tab, setTab] = useState<Tab>('orders');
+  const pendingPayments = orders.filter((o) => o.submissions.some((s) => s.status === 'pending_verification')).length;
+  const isManager = profile.role === 'owner' || profile.role === 'manager';
+  const tabs: Tab[] = ['orders', ...(isManager ? (['payments', 'reports'] as const) : []), ...(profile.role === 'owner' ? (['team'] as const) : [])];
+
+  // Show how many requests are waiting in the browser tab title.
+  useEffect(() => {
+    const waiting = orders.filter((o) => o.status === 'pending_review').length;
+    document.title = waiting ? `(${waiting}) ${t('app.name')}` : t('app.name');
+    return () => {
+      document.title = t('app.name');
+    };
+  }, [orders, t]);
 
   useEffect(() => {
     if (error) notify('error', tError(error));
@@ -33,12 +50,6 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
     });
   }, [orders, filter, query]);
 
-  const counts = useMemo(() => {
-    const result = {} as Record<StatusFilter, number>;
-    for (const f of FILTERS) result[f] = orders.filter((o) => matchesFilter(o.status, f)).length;
-    return result;
-  }, [orders]);
-
   const toolbar = (
     <div className="toolbar">
       <label className="searchbox">
@@ -48,17 +59,53 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
       <div className="chips" role="tablist">
         {FILTERS.map((f) => (
           <button key={f} role="tab" aria-selected={filter === f} className={filter === f ? 'chip on' : 'chip'} onClick={() => setFilter(f)}>
-            {t(`filter.${f}`)} <i>{counts[f]}</i>
+            {t(`filter.${f}`)}
           </button>
         ))}
       </div>
     </div>
   );
 
+  const nav =
+    tabs.length > 1 ? (
+      <div className="tabs" role="tablist">
+        {tabs.map((x) => (
+          <button key={x} role="tab" aria-selected={tab === x} className={tab === x ? 'selected' : ''} onClick={() => setTab(x)}>
+            {t(`nav.${x}`)}
+            {x === 'payments' && pendingPayments > 0 ? ` (${pendingPayments})` : ''}
+          </button>
+        ))}
+      </div>
+    ) : null;
+
+  if (tab === 'payments' && isManager)
+    return (
+      <>
+        {nav}
+        <PaymentsAdminPage onChanged={reload} />
+      </>
+    );
+  if (tab === 'reports' && isManager)
+    return (
+      <>
+        {nav}
+        <ReportsPage orders={orders} />
+      </>
+    );
+  if (tab === 'team' && profile.role === 'owner')
+    return (
+      <>
+        {nav}
+        <TeamPage me={profile} />
+      </>
+    );
+
   return (
     <>
+      {nav}
       <div className="intro">
         <div>
+          <p className="eyebrow">{t('staff.eyebrow')}</p>
           <h1>{t('staff.title')}</h1>
           <p className="muted">{t('staff.subtitle')}</p>
         </div>
