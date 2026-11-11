@@ -359,3 +359,33 @@ button:active:not(:disabled) { transform: translateY(1px); }
   .panel { padding: 24px; }
   .intro { padding: 34px 32px 38px; }
 }
+
+/* ---------- Owner report ---------- */
+.viewnav { max-width: 360px; }
+.rpt-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+@media (min-width: 860px) { .rpt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.panel h3 { font-size: 0.95rem; color: var(--ink); }
+.small { font-size: 0.82rem; }
+.bars { display: flex; align-items: stretch; gap: 4px; height: 190px; padding-top: 4px; }
+.bar-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; position: relative; }
+.bar-col i { display: block; width: 100%; max-width: 38px; background: linear-gradient(180deg, var(--brand), #4a1525); border-radius: 6px 6px 2px 2px; min-height: 2px; }
+.bar-col small { color: var(--muted); font-size: 0.68rem; white-space: nowrap; }
+.bar-val { font-size: 0.66rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.hbar-top { display: flex; justify-content: space-between; gap: 10px; font-size: 0.88rem; }
+.hbar-top span { min-width: 0; overflow-wrap: anywhere; }
+.hbar-top strong { white-space: nowrap; }
+.hbar-track { height: 9px; border-radius: 99px; background: var(--bg); overflow: hidden; margin-top: 5px; }
+.hbar-track i { display: block; height: 100%; border-radius: 99px; background: var(--brand); }
+.rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.rows li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.rows li:last-child { border-bottom: 0; }
+.rows li > span { min-width: 0; display: grid; gap: 2px; overflow-wrap: anywhere; }
+.rows small { color: var(--muted); }
+.rows .row-alert { background: var(--amber-soft); border-radius: 10px; padding: 10px 12px; border-bottom: 0; margin-bottom: 6px; }
+.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-weight: 700; text-align: right; }
+.tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.rtable { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 640px; }
+.rtable th { text-align: left; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 2px solid var(--line); white-space: nowrap; }
+.rtable td { padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
