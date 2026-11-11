@@ -1,8 +1,11 @@
 /** An error with a stable machine code that the UI translates (see `err.*` in the i18n dictionaries). */
 export class AppError extends Error {
   readonly code: string;
-  constructor(code: string) {
+  /** Raw backend message, kept only to help diagnose 'generic' failures. */
+  readonly detail?: string;
+  constructor(code: string, detail?: string) {
     super(code);
+    this.detail = detail;
     this.name = 'AppError';
     this.code = code;
   }
@@ -29,5 +32,6 @@ export function toAppError(error: unknown): AppError {
     return new AppError('network');
   if (lower.includes('rate limit') || lower.includes('too many requests')) return new AppError('rate_limited');
   if (lower.includes('email not confirmed')) return new AppError('email_not_confirmed');
-  return new AppError('generic');
+  console.error('[malka-express] unexpected error:', error);
+  return new AppError('generic', message || undefined);
 }

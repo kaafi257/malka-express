@@ -8,7 +8,12 @@ export type OrderStatus =
   | 'ready'
   | 'collected'
   | 'cancelled';
-export type PaymentMethod = 'cash' | 'telebirr' | 'cbe_birr' | 'bank_transfer' | 'other';
+export type PaymentMethod = 'cash' | 'telebirr' | 'cbe_birr' | 'bank_transfer' | 'other' | 'ebirr' | 'cbe_bank' | 'awash_bank';
+/** Methods a driver can pay with (configured by managers in the Payments tab). */
+export type DriverPayMethod = 'ebirr' | 'cbe_bank' | 'telebirr' | 'awash_bank' | 'cbe_birr';
+export type SubmissionStatus = 'pending_verification' | 'verified' | 'rejected';
+/** What the driver sees: Unpaid / Pending Verification / Verified / Rejected ('none' = not payable, e.g. cancelled). */
+export type PaymentState = 'unpaid' | 'pending_verification' | 'verified' | 'rejected' | 'none';
 
 export interface StaffProfile {
   kind: 'staff';
@@ -43,6 +48,7 @@ export interface Order {
   document_type: DocumentType;
   description: string | null;
   status: OrderStatus;
+  copies: number;
   quoted_price: number | null;
   payment_status: 'unpaid' | 'paid';
   created_at: string;
@@ -51,6 +57,8 @@ export interface Order {
   collected_at: string | null;
   driver: { full_name: string; phone: string } | null;
   documents: OrderDocument[];
+  submissions: OrderSubmission[];
+  /** Only returned to the driver who owns the order. Staff never receive it. */
   pin: { pin: string } | null;
 }
 
@@ -82,4 +90,33 @@ export interface OrderEvent {
   to_status: OrderStatus | null;
   note: string | null;
   created_at: string;
+}
+
+export interface OrderSubmission {
+  id: string;
+  method: DriverPayMethod;
+  reference: string;
+  status: SubmissionStatus;
+  rejection_reason: string | null;
+  created_at: string;
+  verified_at: string | null;
+}
+
+export interface PaymentMethodConfig {
+  method: DriverPayMethod;
+  sort_order: number;
+  enabled: boolean;
+  provider_name: string;
+  account_holder: string;
+  account_number: string;
+  instructions: string;
+}
+
+/** A submission with the context staff need to review it. */
+export interface SubmissionDetail extends OrderSubmission {
+  order_id: string;
+  amount: number;
+  receipt_path: string;
+  driver: { full_name: string; phone: string } | null;
+  order: { reference: string; document_type: DocumentType; copies: number; description: string | null } | null;
 }
