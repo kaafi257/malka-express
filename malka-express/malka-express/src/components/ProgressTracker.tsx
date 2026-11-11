@@ -8,7 +8,7 @@ export function ProgressTracker({ status }: { status: OrderStatus }) {
   const isDone = status === 'collected';
 
   return (
-    <ol className="tracker" aria-label="progress" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+    <ol className="tracker" aria-label="progress">
       <li className={isReady ? 'done' : 'current'}>
         <span className="dot">{isReady ? <Check size={12} /> : 1}</span>
         <small>1. In Progress</small>

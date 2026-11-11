@@ -1,4 +1,3 @@
-import { BadgeCheck, ClipboardList, Clock, Hammer, Wallet } from 'lucide-react';
 import { useMemo } from 'react';
 import { useI18n } from '../lib/i18n';
 import type { Order } from '../lib/types';
@@ -19,33 +18,28 @@ export function StatCards({ orders, detailed }: { orders: Order[]; detailed: boo
   return (
     <div className="stats">
       <div>
-        <ClipboardList size={18} />
-        <small>{t('stats.total')}</small>
         <strong>{counts.total}</strong>
+        <small>{t('stats.total')}</small>
       </div>
-      <div>
-        <Clock size={18} />
-        <small>{t('stats.new')}</small>
+      <div className={counts.pending > 0 ? 'hot' : ''}>
         <strong>{counts.pending}</strong>
+        <small>{t('stats.new')}</small>
       </div>
       {detailed && (
         <>
           <div>
-            <Wallet size={18} />
-            <small>{t('stats.payment')}</small>
             <strong>{counts.payment}</strong>
+            <small>{t('stats.payment')}</small>
           </div>
           <div>
-            <Hammer size={18} />
-            <small>{t('stats.work')}</small>
             <strong>{counts.work}</strong>
+            <small>{t('stats.work')}</small>
           </div>
         </>
       )}
-      <div>
-        <BadgeCheck size={18} />
-        <small>{t('stats.ready')}</small>
+      <div className={counts.ready > 0 ? 'go' : ''}>
         <strong>{counts.ready}</strong>
+        <small>{t('stats.ready')}</small>
       </div>
     </div>
   );

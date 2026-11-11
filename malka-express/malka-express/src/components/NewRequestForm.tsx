@@ -97,7 +97,9 @@ export function NewRequestForm({ userId, onCreated }: { userId: string; onCreate
         </label>
 
         <label className="full">
-          {t('form.reference')} <span className="muted">({t('common.optional')})</span>
+          <span>
+            {t('form.reference')} <span className="muted">({t('common.optional')})</span>
+          </span>
           <input
             value={description}
             maxLength={500}
@@ -133,22 +135,13 @@ export function NewRequestForm({ userId, onCreated }: { userId: string; onCreate
           </ul>
         )}
 
-        {/* Live calculated price banner */}
-        <div className="full" style={{
-          background: 'var(--brand-soft)',
-          padding: '14px 18px',
-          borderRadius: '12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
+        {/* Live calculated price */}
+        <div className="quote full">
           <div>
-            <span style={{ fontSize: '0.85rem', color: 'var(--muted)', display: 'block' }}>Total Price</span>
-            <strong style={{ fontSize: '1.4rem', color: 'var(--brand)' }}>{formatEtb(price)}</strong>
+            <span>Total price</span>
+            <strong>{formatEtb(price)}</strong>
           </div>
-          <small className="muted">
-            {type === 't1' ? '200 ETB for 5 copies (40 ETB/extra)' : `${quantity} × 30 ETB`}
-          </small>
+          <small>{type === 't1' ? '200 ETB for 5 copies, 40 ETB per extra' : `${quantity} × 30 ETB`}</small>
         </div>
 
         <button className="primary full" disabled={busy || files.length === 0}>
