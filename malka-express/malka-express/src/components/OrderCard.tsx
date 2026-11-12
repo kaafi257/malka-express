@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { KeyRound, Phone, ShieldCheck, CheckCircle2, RotateCw, Printer, Banknote } from 'lucide-react';
 import * as api from '../lib/api';
 import { formatDateTime, formatEtb, formatPhone } from '../lib/format';
@@ -31,6 +31,22 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
     isManager &&
     ['pending_review', 'awaiting_payment'].includes(order.status) &&
     order.documents.length > 0;
+
+  // Pre-fill the suggested price (copies x price per copy) so the manager only has to check and confirm.
+  useEffect(() => {
+    if (!canSetPrice || order.quoted_price != null) return;
+    let alive = true;
+    api
+      .fetchDocPrices()
+      .then((p) => {
+        const unit = p[order.document_type];
+        if (alive && unit) setPriceInput((cur) => cur || String(unit * order.copies));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [canSetPrice, order.quoted_price, order.document_type, order.copies]);
 
   async function run(action: () => Promise<unknown>, successText = t('toast.updated')) {
     if (busy) return;
