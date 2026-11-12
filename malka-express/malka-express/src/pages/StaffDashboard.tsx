@@ -1,4 +1,5 @@
 import { BarChart3, ClipboardList, CreditCard, Menu, RefreshCw, Search, Users, X } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { PaymentsAdminPage } from './PaymentsAdminPage';
 import { ReportsPage } from './ReportsPage';
@@ -108,7 +109,7 @@ export function StaffDashboard({ profile }: { profile: StaffProfile }) {
                 <button
                   key={x}
                   className={tab === x ? 'drawer-item on' : 'drawer-item'}
-                  style={{ ['--i' as string]: n }}
+                  style={{ '--i': n } as CSSProperties}
                   onClick={() => {
                     setTab(x);
                     setMenuOpen(false);

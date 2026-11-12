@@ -4,6 +4,7 @@ import { BottomNav, type DriverView } from '../components/driver/BottomNav';
 import { DriverRequestCard } from '../components/driver/DriverRequestCard';
 import { PaymentFlow } from '../components/driver/PaymentFlow';
 import { PaymentStatusBadge } from '../components/driver/PaymentStatusBadge';
+import { InstallButton } from '../components/InstallButton';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { NewRequestForm } from '../components/NewRequestForm';
 import { useOrders } from '../hooks/useOrders';
@@ -55,6 +56,7 @@ export function DriverDashboard() {
           <div className="mark mini">M</div>
           <b>{t('app.name')}</b>
         </div>
+        <InstallButton />
         <button className="who" onClick={() => go('profile')} aria-label={t('nav.profile')}>
           <span>{profile.full_name}</span>
           <UserRound size={20} aria-hidden />
