@@ -8,7 +8,7 @@ interface InstallEvent extends Event {
 /** "Install app" button: Android/Chrome shows the install prompt; iPhone shows how to add it. */
 export function InstallButton() {
   const [evt, setEvt] = useState<InstallEvent | null>(null);
-  const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   useEffect(() => {

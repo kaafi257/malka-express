@@ -1,12 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import {
-  KeyRound,
-  Phone,
-  ShieldCheck,
-  CheckCircle2,
-  RotateCw,
-  Printer,
-} from 'lucide-react';
+import { KeyRound, Phone, ShieldCheck, CheckCircle2, RotateCw, Printer, Banknote } from 'lucide-react';
 import * as api from '../lib/api';
 import { formatDateTime, formatEtb, formatPhone } from '../lib/format';
 import { useI18n } from '../lib/i18n';
@@ -27,10 +20,17 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
   const { notify } = useToast();
   const [busy, setBusy] = useState(false);
   const [pinInput, setPinInput] = useState('');
+  const [priceInput, setPriceInput] = useState(
+    order.quoted_price != null ? String(order.quoted_price) : '',
+  );
 
   const isDriver = viewer === 'driver';
   const isManager = viewer === 'owner' || viewer === 'manager';
   const isStaff = !isDriver;
+  const canSetPrice =
+    isManager &&
+    ['pending_review', 'awaiting_payment'].includes(order.status) &&
+    order.documents.length > 0;
 
   async function run(action: () => Promise<unknown>, successText = t('toast.updated')) {
     if (busy) return;
@@ -42,16 +42,30 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
       await onChanged();
     } catch (e) {
       notify('error', tError(e));
-      // Refresh even after a failed transition: another staff member may
-      // have changed the order since this card was loaded.
+      // Reload after a conflict so the card reflects the latest server status.
       try {
         await onChanged();
       } catch {
-        // Preserve the original action error; the next normal refresh can retry.
+        // Keep the original action error visible.
       }
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleSetPrice(e: FormEvent) {
+    e.preventDefault();
+    const price = Number(priceInput);
+
+    if (!Number.isFinite(price) || price <= 0 || price > 1_000_000) {
+      notify('error', t('err.invalid_price'));
+      return;
+    }
+
+    await run(
+      () => api.setPrice(order.id, price),
+      'Price saved. Order moved to Awaiting Payment.',
+    );
   }
 
   // Verify driver's secret PIN
@@ -142,7 +156,32 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
       )}
 
       {isDriver && order.status === 'pending_review' && (
-        <p className="hint">We received your request. Copies are being printed at the desk.</p>
+        <p className="hint">Your request is waiting for staff review and pricing.</p>
+      )}
+
+      {/* Manager/owner: set or update the price directly on the order card. */}
+      {canSetPrice && (
+        <form className="actions" onSubmit={(e) => void handleSetPrice(e)}>
+          <label className="price-entry" style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+            <span>{t('action.setPrice')} (ETB)</span>
+            <input
+              type="number"
+              min="0.01"
+              max="1000000"
+              step="0.01"
+              inputMode="decimal"
+              value={priceInput}
+              onChange={(e) => setPriceInput(e.target.value)}
+              placeholder={t('action.pricePlaceholder')}
+              disabled={busy}
+              required
+            />
+          </label>
+          <button type="submit" className="primary modern-btn" disabled={busy || !priceInput.trim()}>
+            <Banknote size={18} />
+            {busy ? t('common.loading') : 'Save Price & Send Payment Request'}
+          </button>
+        </form>
       )}
 
       {/* Staff: only show the action valid for the current order status. */}
@@ -152,12 +191,7 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
             type="button"
             className="primary modern-btn"
             disabled={busy}
-            onClick={() =>
-              void run(
-                () => api.startPrinting(order.id),
-                'Printing started successfully!',
-              )
-            }
+            onClick={() => void run(() => api.startPrinting(order.id), 'Printing started successfully!')}
           >
             <Printer size={18} /> Start Printing
           </button>
@@ -170,12 +204,7 @@ export function OrderCard({ order, viewer, onChanged }: Props) {
             type="button"
             className="primary modern-btn"
             disabled={busy}
-            onClick={() =>
-              void run(
-                () => api.markReady(order.id),
-                'Copies printed · Secret Code generated for driver!',
-              )
-            }
+            onClick={() => void run(() => api.markReady(order.id), 'Copies printed · Secret Code generated for driver!')}
           >
             <CheckCircle2 size={18} /> Mark ready for pickup
           </button>
