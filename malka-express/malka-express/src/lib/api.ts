@@ -134,7 +134,7 @@ function safeFileName(name: string): string {
 export async function submitRequest(
   input: { type: DocumentType; description: string; copies: number; files: File[] },
   userId: string,
-): Promise<void> {
+): Promise<string> {
   const invalid = validateFiles(input.files);
   if (invalid) throw new AppError(invalid);
 
@@ -171,7 +171,18 @@ export async function submitRequest(
     await supabase.rpc('cancel_order', { p_order_id: id });
     throw toAppError(e);
   }
+  return id;
 }
+
+/** Price per copy for each document type (read-only for drivers). */
+export async function fetchDocPrices(): Promise<Record<string, number>> {
+  const { data, error } = await supabase.from('doc_prices').select('document_type, price_per_copy');
+  if (error) throw toAppError(error);
+  return Object.fromEntries((data ?? []).map((r) => [String(r.document_type), Number(r.price_per_copy)]));
+}
+
+/** Driver: price your own new request automatically (copies x price per copy). */
+export const driverQuote = (orderId: string) => rpc('driver_quote', { p_order_id: orderId });
 
 /** Short-lived private link to a stored document (5 minutes). */
 export async function getDocumentUrl(storagePath: string): Promise<string> {
